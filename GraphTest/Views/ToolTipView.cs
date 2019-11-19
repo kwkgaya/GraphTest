@@ -52,8 +52,6 @@ namespace GraphTest.Views
             // Not creating new paint objects for each draw, therefore scale the properties here.
             TextPaint.TextSize = ValueLabelFontSize;
             FramePaint.StrokeWidth = BorderThickness;
-            // Fill paint is used to erase the vertical line of the traingle. + 1 to makesure no pixel remain unerased 
-            FillPaint.StrokeWidth = BorderThickness + 1; 
 
             // Move the tip little away from the dot
             var tipX = tipPoint.X + 8 * scale;
@@ -64,30 +62,53 @@ namespace GraphTest.Views
             var textHeight = frameRect.Top;
             // Inflate for padding
             frameRect.Inflate(ValueLabelPadding, ValueLabelPadding);
-            var xFrame = tipX + TriangleWidth;
-            var yFrame = tipY - frameRect.Height / 2;
-            frameRect.Location = new SKPoint(xFrame, yFrame);
 
-            canvas.DrawRoundRect(frameRect, ToolTipCornerRadius, ToolTipCornerRadius, FillPaint);
-            canvas.DrawRoundRect(frameRect, ToolTipCornerRadius, ToolTipCornerRadius, FramePaint);
-            
-            SKPoint GetPoint(int xFactor, int yFactor) => new SKPoint(tipX + (xFactor * TriangleWidth ), tipY + (yFactor * TriangleWidth));
+
+            // Start from the tip then move clockwise. Triangle is on negetive side
+            //                 |    
+            //               c1|     ------------------------------     . c2
+            //                 |    /                               \
+            //                 |   /                                 \
+            //                 |  /                                   \
+            //                 | /                                     \
+            //                 |                                       |
+            //                 |                                       |
+            //                 |                                       |
+            //                 |                                       |
+            //                /|                                       |
+            //               / |                                       |
+            //              /  |                                       |
+            //             /   |                                       |
+            //---------------------------------------------------------|---------------------
+            //             \   |                                       |
+            //              \  |                                       |
+
+
+            SKPoint GetPoint(float x, float y) => new SKPoint(tipX + x + TriangleWidth, tipY + y);
 
             using (var path = new SKPath())
             {
-                path.MoveTo(GetPoint(1, 1));
-                path.LineTo(GetPoint(1, -1));
-                canvas.DrawPath(path, FillPaint);
-                path.Reset();
-                path.MoveTo(GetPoint(1, 1));
-                path.LineTo(GetPoint(0, 0));
-                path.LineTo(GetPoint(1, -1));
+                var corners = new SKPoint[] {
+                    GetPoint(0, -frameRect.Height / 2),
+                    GetPoint(frameRect.Width, -frameRect.Height / 2),
+                    GetPoint(frameRect.Width, frameRect.Height / 2),
+                    GetPoint(0, frameRect.Height / 2)
+                };
+
+                path.MoveTo(GetPoint(-TriangleWidth, 0));
+                path.LineTo(GetPoint(0, -TriangleWidth));
+                path.ArcTo(corners[0], corners[1], ToolTipCornerRadius);
+                path.ArcTo(corners[1], corners[2], ToolTipCornerRadius);
+                path.ArcTo(corners[2], corners[3], ToolTipCornerRadius);
+                path.ArcTo(corners[3], corners[0], ToolTipCornerRadius);
+                path.LineTo(GetPoint(0, TriangleWidth));
+                path.Close();
                 canvas.DrawPath(path, FillPaint);
                 canvas.DrawPath(path, FramePaint);
             }
 
-            var xText = xFrame + ValueLabelPadding;
-            var yText = yFrame + ValueLabelPadding - textHeight;
+            var xText = tipX + TriangleWidth + ValueLabelPadding;
+            var yText = tipY - frameRect.Height / 2 + ValueLabelPadding - textHeight;
 
             canvas.DrawText(Text, xText, yText, TextPaint);
         }
