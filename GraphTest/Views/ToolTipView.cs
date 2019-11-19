@@ -22,7 +22,7 @@ namespace GraphTest.Views
         private readonly static SKPaint FillPaint = new SKPaint
         {
             Color = SKColors.LightGray,
-            Style = SKPaintStyle.Fill,
+            Style = SKPaintStyle.StrokeAndFill,
             IsAntialias = true
         };
 
@@ -48,9 +48,12 @@ namespace GraphTest.Views
         public void Redraw(SKPoint tipPoint, SKCanvas canvas, float scale)
         {
             Scale = scale;
+
             // Not creating new paint objects for each draw, therefore scale the properties here.
             TextPaint.TextSize = ValueLabelFontSize;
             FramePaint.StrokeWidth = BorderThickness;
+            // Fill paint is used to erase the vertical line of the traingle. + 1 to makesure no pixel remain unerased 
+            FillPaint.StrokeWidth = BorderThickness + 1; 
 
             // Move the tip little away from the dot
             var tipX = tipPoint.X + 8 * scale;
@@ -67,10 +70,15 @@ namespace GraphTest.Views
 
             canvas.DrawRoundRect(frameRect, ToolTipCornerRadius, ToolTipCornerRadius, FillPaint);
             canvas.DrawRoundRect(frameRect, ToolTipCornerRadius, ToolTipCornerRadius, FramePaint);
+            
+            SKPoint GetPoint(int xFactor, int yFactor) => new SKPoint(tipX + (xFactor * TriangleWidth ), tipY + (yFactor * TriangleWidth));
 
             using (var path = new SKPath())
             {
-                SKPoint GetPoint(int xFactor, int yFactor) => new SKPoint(tipX + (xFactor * TriangleWidth ), tipY + (yFactor * TriangleWidth));
+                path.MoveTo(GetPoint(1, 1));
+                path.LineTo(GetPoint(1, -1));
+                canvas.DrawPath(path, FillPaint);
+                path.Reset();
                 path.MoveTo(GetPoint(1, 1));
                 path.LineTo(GetPoint(0, 0));
                 path.LineTo(GetPoint(1, -1));
