@@ -1,5 +1,6 @@
 ﻿using SkiaSharp;
 using SkiaSharp.Views.Forms;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -11,8 +12,9 @@ namespace GraphTest.Views
     {
         private const float PointCircleRadius = 4f;
         private const float PathThickness = 2f;
+        private const float GraphMargin = 30f;
 
-        public readonly float[] Points = new float[] { 2, 10, 4, 8, 1, 8 };
+        public readonly IList<float> Points = new List<float>();
         private static readonly SKPaint lineColor = new SKPaint { Style = SKPaintStyle.Stroke, Color = SKColors.Blue, IsAntialias = true };
         private static readonly SKPaint pointColor = new SKPaint { Style = SKPaintStyle.StrokeAndFill, Color = SKColors.Black, IsAntialias = true };
         private List<ToolTipView> toolTips = new List<ToolTipView>();
@@ -20,9 +22,20 @@ namespace GraphTest.Views
         public GraphView()
         {
             VerticalOptions = LayoutOptions.FillAndExpand;
-            HorizontalOptions = LayoutOptions.FillAndExpand;
+            HorizontalOptions = LayoutOptions.FillAndExpand; 
+            AddRandomPoints();
 
             PaintSurface += Redraw;
+        }
+
+        private void AddRandomPoints() 
+        {
+            var rand = new Random();
+
+            for (int i = 0; i < 8; i++)
+            {
+                Points.Add((float)rand.NextDouble() * 10);
+            }
         }
 
         protected override void OnParentSet()
@@ -33,14 +46,12 @@ namespace GraphTest.Views
             foreach (var point in Points)
             {
                 var toolTip = new ToolTipView($"y: {point}");
-                //((Grid)Parent).Children.Add(toolTip);
                 toolTips.Add(toolTip);
             }
         }
 
         private void Redraw(object sender, SKPaintSurfaceEventArgs e)
         {
-            var margin = 30;
             var canvas = e.Surface.Canvas;
             float width = e.Info.Width;
             float height = e.Info.Height;
@@ -48,15 +59,15 @@ namespace GraphTest.Views
             canvas.Clear();
 
             var range = Points.Max() - Points.Min() + 1;
-            var dY = (height - margin * 2) / range;
-            var dX = (width - margin * 2) / (Points.Length - 1);
-            float GetY(float y) => margin + (dY * y);
+            var dY = (height - GraphMargin * 2) / range;
+            var dX = (width - GraphMargin * 2) / (Points.Count - 1);
+            float GetY(float y) => GraphMargin + (dY * y);
 
-            float x = margin;
+            float x = GraphMargin;
 
             var path = new SKPath();
             var points = new List<SKPoint>();
-            for (int i = 0; i < Points.Length; i++) 
+            for (int i = 0; i < Points.Count; i++) 
             {
                 float y = GetY(Points[i]);
 

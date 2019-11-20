@@ -83,7 +83,7 @@ namespace GraphTest.Views
             //             \   |                                       |
             //              \  |                                       |
 
-
+            // TODO: Use SKCanvas.Translate?
             SKPoint GetPoint(float x, float y) => new SKPoint(tipX + x + TriangleWidth, tipY + y);
 
             using (var path = new SKPath())
